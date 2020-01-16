@@ -2,7 +2,7 @@
   <div id="app">
 <b-navbar toggleable="md" type="dark" variant="primary">
 
-  <b-navbar-brand>Project Name</b-navbar-brand>
+  <b-navbar-brand>ToDo App</b-navbar-brand>
 
   <b-collapse is-nav id="nav_collapse">
 

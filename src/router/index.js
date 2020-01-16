@@ -19,10 +19,7 @@ const router = new VueRouter({
     {
       path: '/',
       name: 'Main',
-      component: Main,
-      meta: {
-        requiresAuth: true  //remove to allow anonymous entry
-      }
+      component: Main
     },
     {
       path: '/Login',
