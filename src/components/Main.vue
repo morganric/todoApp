@@ -5,12 +5,10 @@
         <b-col>
           <h2>{{content}}</h2>
           <hr/>
-          <br/>
         </b-col>
       </b-row>
       <b-row>
         <b-col>
-
           <b-button variant="success" block v-b-toggle.collapse-1 >Add An Item</b-button>
             <b-collapse id="collapse-1" class="mt-2">
             <b-card class="text-left">
@@ -52,17 +50,18 @@
             </b-card>
           </b-collapse>
           <br/>
+          <b-button variant="info" block @click="sortList" >Sort List</b-button>
           <br/>
           <div role="tablist" >
             <b-card no-body class="mb-1 text-left" v-for="(item, index) in items" >
               <b-card-header header-tag="header" class="p-1" role="tab">
-                <b-button  href="#" v-b-toggle="'accordion-' + index" variant="default" class="text-left">{{ item.title }}
+                <b-button  href="#" v-b-toggle="'accordion-' + index" variant="default" class="text-left">{{ item.title }} <small>({{ item.category }})</small>
                 </b-button>
-                <b-button class="float-right" size="sm" variant="danger" @click="deleteItem(index)">Delete</b-button>
+                <b-button class="float-right" size="sm" variant="danger" @click="deleteItem(index)">X</b-button>
                   <span class="float-right">&nbsp;</span>
-                  <b-button class="float-right" size="sm" variant="info" v-b-toggle="'accordion-' + index" v-b-modal="'modal-' + index" @click="editItem(index)">Edit</b-button>
+                  <b-button class="float-right" size="sm" variant="info" v-b-modal="'modal-' + index" @click="editItem(index)">Edit</b-button>
               </b-card-header>
-              <b-collapse v-bind:id="'accordion-' + index" visible accordion="my-accordion" role="tabpanel">
+              <b-collapse v-bind:id="'accordion-' + index" accordion="my-accordion" role="tabpanel">
                 <b-card-body>
                   <b-card-text>{{ item.description }}</b-card-text>
                 </b-card-body>
@@ -70,19 +69,18 @@
             </b-card>
 
             <div v-for="(item, index) in items" >
-              <b-modal v-bind:id="'modal-' + index" title="Edit" hide-footer>
-                <!-- <h4>Edit</h4> -->
+              <b-modal v-bind:id="'modal-' + index" title="Editing" hide-footer>
                     <!-- edit item form -->
-                    <b-form @submit="onUpdate(index)" v-if="editing === index">
+                    <b-form @submit="onUpdate" v-if="editingId === index">
                       <b-form-group
                         id="input-group-title"
-                        label="Edit Title"
+                        label="Title"
                         label-for="input-1"
                         description="Give your item a title."
                       >
                         <b-form-input
                           id="input-title"
-                          v-model="item.title"
+                          v-model="editing.title"
                           type="text"
                           required
                           placeholder=""
@@ -91,26 +89,26 @@
 
                       <b-form-group
                         id="input-group-description"
-                        label="Edit Description"
+                        label="Description"
                         label-for="input-description"
                         description="Describe your item."
                       >
                         <b-form-textarea
                           id="input-2"
-                          v-model="item.description"
+                          v-model="editing.description"
                         ></b-form-textarea>
                       </b-form-group>
 
                       <b-form-group
                         id="input-group-category"
-                        label="Change Category"
+                        label="Category"
                         label-for="input-category"
                       >
-                        <b-form-select v-model="item.category" :options="categories" size="sm" required ></b-form-select>
+                        <b-form-select v-model="editing.category" :options="categories" size="sm" required ></b-form-select>
                       </b-form-group>
                       <br/>
                       <br/>
-                      <b-button type="submit" variant="info" >Update</b-button>
+                      <b-button type="submit" variant="info"  @click="$bvModal.hide('modal-' + index)">Update</b-button>
                       <b-button type="reset" variant="secondary">Reset</b-button>
                       <b-button variant="secondary" class="float-right" @click="$bvModal.hide('modal-' + index)">Cancel</b-button>
                     </b-form>
@@ -119,7 +117,7 @@
             
           </div>
           <br/>
-          <b-button variant="danger" block @click="deleteAllItems" v-if="items.length > 0" >Clear List</b-button>
+          <b-button variant="secondary" block @click="deleteAllItems" v-if="items.length > 0" >Clear List</b-button>
         </b-col>
       </b-row>
     </b-container>
@@ -132,7 +130,7 @@ export default {
   name: 'Main',
   data () {
     return {
-      content: 'My Super Fun Times ToDo List',
+      content: 'My List',
       categories: [
           { value: null, text: 'Please select an option' },
           { value: "a", text: 'Life Changing' },
@@ -146,6 +144,7 @@ export default {
       },
       items: [],
       show: true,
+      editingId: null,
       editing: null
     }
   },
@@ -165,7 +164,8 @@ export default {
     },
 
     editItem: function(id) {
-      this.editing = id;
+      this.editingId = id;
+      this.editing = this.items[id];
     },
 
     onSubmit: function(evt) {
@@ -183,11 +183,9 @@ export default {
         evt.preventDefault();
         var that = this;
 
-        // that.items.push(that.form);
-        // window.localStorage.setItem('items', JSON.stringify(that.items));
-        // that.items = items;
+        that.items[this.editingId] = that.editing;
+        window.localStorage.setItem('items', JSON.stringify(that.items));
 
-        // collapes form?
     },
     
     onReset: function(evt) {
@@ -203,6 +201,10 @@ export default {
           this.show = true
         })
 
+    },
+
+    sortList: function() {
+      this.items = this.items.sort((a, b) => a.category.localeCompare(b.category));
     }
 
   },
@@ -225,7 +227,7 @@ export default {
           { category: "a", title: 'Add Item to ToDo List', description: 'Button and / or form for adding new items' },
           { category: "b", title: 'Remove Item to ToDo List', description: 'Button and / or form for deleting items' },
           { category: "c", title: 'Edit Item to ToDo List', description: 'Button and / or form for editing items' },
-          { category: "c", title: 'Order items', description: 'Order by priority / category' }
+          { category: "a", title: 'Order items', description: 'Order by priority / category' }
         ];
 
       window.localStorage.setItem('items', JSON.stringify(items));
