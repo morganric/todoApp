@@ -55,7 +55,7 @@
           <div role="tablist" >
             <b-card no-body class="mb-1 text-left" v-for="(item, index) in items" >
               <b-card-header header-tag="header" class="p-1" role="tab">
-                <b-button  href="#" v-b-toggle="'accordion-' + index" variant="default" class="text-left">{{ item.title }} <small>({{ item.category }})</small>
+                <b-button  href="#" v-b-toggle="'accordion-' + index" variant="default" class="text-left">{{ item.title }} <small>({{ categories.filter(obj => {return obj.value === item.category})[0]["text"] }})</small>
                 </b-button>
                 <b-button class="float-right" size="sm" variant="danger" @click="deleteItem(index)">X</b-button>
                   <span class="float-right">&nbsp;</span>
@@ -161,6 +161,7 @@ export default {
 
     deleteItem: function(id) {
       this.items.shift(id);
+      window.localStorage.setItem('items', JSON.stringify(this.items));
     },
 
     editItem: function(id) {
@@ -224,10 +225,10 @@ export default {
     } else {
 
       var items = [
-          { category: "a", title: 'Add Item to ToDo List', description: 'Button and / or form for adding new items' },
-          { category: "b", title: 'Remove Item to ToDo List', description: 'Button and / or form for deleting items' },
-          { category: "c", title: 'Edit Item to ToDo List', description: 'Button and / or form for editing items' },
-          { category: "a", title: 'Order items', description: 'Order by priority / category' }
+          { category: "a", title: 'Add Item', description: 'Button and / or form for adding new items' },
+          { category: "b", title: 'Remove Item', description: 'Button and / or form for deleting items' },
+          { category: "c", title: 'Edit Item', description: 'Button and / or form for editing items' },
+          { category: "a", title: 'Order Items', description: 'Order by priority / category' }
         ];
 
       window.localStorage.setItem('items', JSON.stringify(items));
