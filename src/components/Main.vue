@@ -14,16 +14,17 @@
           <b-button variant="success" block v-b-toggle.collapse-1 >Add An Item</b-button>
             <b-collapse id="collapse-1" class="mt-2">
             <b-card class="text-left">
-              <b-form @submit="onSubmit" @reset="onReset" v-if="">
+
+              <b-form @submit="onSubmit" @reset="onReset" v-if="show">
                 <b-form-group
-                  id="input-group-1"
+                  id="input-group-title"
                   label="ToDo Title"
                   label-for="input-1"
                   description="Give your item a title."
                 >
                   <b-form-input
-                    id="input-1"
-                    v-model="item.title"
+                    id="input-title"
+                    v-model="form.title"
                     type="text"
                     required
                     placeholder=""
@@ -31,18 +32,21 @@
                 </b-form-group>
 
                 <b-form-group
-                  id="input-group-2"
+                  id="input-group-description"
                   label="ToDo description"
-                  label-for="input-2"
+                  label-for="input-description"
                   description="Describe your item."
                 >
                   <b-form-textarea
                     id="input-2"
-                    v-model="item.description"
+                    v-model="form.description"
                   ></b-form-textarea>
                 </b-form-group>
 
-                <b-button type="submit" variant="info">Submit</b-button>
+                <b-form-select v-model="form.category" :options="categories" size="sm" required ></b-form-select>
+                <br/>
+                <br/>
+                <b-button type="submit" variant="info" >Submit</b-button>
                 <b-button type="reset" variant="secondary">Reset</b-button>
               </b-form>
             </b-card>
@@ -52,11 +56,11 @@
           <div role="tablist" >
             <b-card no-body class="mb-1 text-left" v-for="(item, index) in items" >
               <b-card-header header-tag="header" class="p-1" role="tab">
-                <b-button  href="#" v-b-toggle="'accordion-' + index" variant="default" class="text-left">{{ index + 1 }}. {{ item.title }}
+                <b-button  href="#" v-b-toggle="'accordion-' + index" variant="default" class="text-left">{{ item.title }}
                 </b-button>
                 <b-button class="float-right" size="sm" variant="danger" @click="deleteItem(index)">Delete</b-button>
                   <span class="float-right">&nbsp;</span>
-                  <b-button class="float-right" size="sm" variant="info" @click="editItem(index)">Edit</b-button>
+                  <b-button class="float-right" size="sm" variant="info" v-b-toggle="'accordion-' + index" v-b-modal="'modal-' + index" @click="editItem(index)">Edit</b-button>
               </b-card-header>
               <b-collapse v-bind:id="'accordion-' + index" visible accordion="my-accordion" role="tabpanel">
                 <b-card-body>
@@ -64,8 +68,58 @@
                 </b-card-body>
               </b-collapse>
             </b-card>
-          </div>
 
+            <div v-for="(item, index) in items" >
+              <b-modal v-bind:id="'modal-' + index" title="Edit" hide-footer>
+                <!-- <h4>Edit</h4> -->
+                    <!-- edit item form -->
+                    <b-form @submit="onUpdate(index)" v-if="editing === index">
+                      <b-form-group
+                        id="input-group-title"
+                        label="Edit Title"
+                        label-for="input-1"
+                        description="Give your item a title."
+                      >
+                        <b-form-input
+                          id="input-title"
+                          v-model="item.title"
+                          type="text"
+                          required
+                          placeholder=""
+                        ></b-form-input>
+                      </b-form-group>
+
+                      <b-form-group
+                        id="input-group-description"
+                        label="Edit Description"
+                        label-for="input-description"
+                        description="Describe your item."
+                      >
+                        <b-form-textarea
+                          id="input-2"
+                          v-model="item.description"
+                        ></b-form-textarea>
+                      </b-form-group>
+
+                      <b-form-group
+                        id="input-group-category"
+                        label="Change Category"
+                        label-for="input-category"
+                      >
+                        <b-form-select v-model="item.category" :options="categories" size="sm" required ></b-form-select>
+                      </b-form-group>
+                      <br/>
+                      <br/>
+                      <b-button type="submit" variant="info" >Update</b-button>
+                      <b-button type="reset" variant="secondary">Reset</b-button>
+                      <b-button variant="secondary" class="float-right" @click="$bvModal.hide('modal-' + index)">Cancel</b-button>
+                    </b-form>
+              </b-modal>
+            </div>
+            
+          </div>
+          <br/>
+          <b-button variant="danger" block @click="deleteAllItems" v-if="items.length > 0" >Clear List</b-button>
         </b-col>
       </b-row>
     </b-container>
@@ -79,39 +133,106 @@ export default {
   data () {
     return {
       content: 'My Super Fun Times ToDo List',
-      item: {
-        title: null,
-        description: null
+      categories: [
+          { value: null, text: 'Please select an option' },
+          { value: "a", text: 'Life Changing' },
+          { value: "b", text: 'Important' },
+          { value: "c", text: 'Meh' }
+        ],
+      form: {
+        title: "",
+        description: "",
+        category: ""
       },
-      items: [
-          { position: 1, title: 'Add Item to ToDo List', description: 'Button and / or form for adding new items' },
-          { position: 2, title: 'Remove Item to ToDo List', description: 'Button and / or form for deleting items' },
-          { position: 3, title: 'Edit Item to ToDo List', description: 'Button and / or form for editing items' },
-          { position: 4, title: 'Order items', description: 'Order by priority / category' }
-        ]
+      items: [],
+      show: true,
+      editing: null
     }
   },
   methods: {
 
-    deleteItem: (id) => {
-      alert("deleteItem: " + id);
-    },
-
-    editItem: (id) => {
-      alert("editItem: " + id);
-    },
-
-    onSubmit: () => {
+    deleteAllItems: function() {
       var that = this;
-      this.item.title = 
-      console.log("added item: ", that.item);
+      console.log("items: ", that.items);
+      this.items = [];
+      window.localStorage.setItem('items', []);
+      console.log("items: ", that.items);
+
     },
 
-    onReset: (id) => {
+    deleteItem: function(id) {
+      this.items.shift(id);
+    },
+
+    editItem: function(id) {
+      this.editing = id;
+    },
+
+    onSubmit: function(evt) {
+        evt.preventDefault();
+        var that = this;
+
+        that.items.push(that.form);
+        window.localStorage.setItem('items', JSON.stringify(that.items));
+        that.items = items;
+
+        // collapes form?
+    },
+
+    onUpdate: function(evt) {
+        evt.preventDefault();
+        var that = this;
+
+        // that.items.push(that.form);
+        // window.localStorage.setItem('items', JSON.stringify(that.items));
+        // that.items = items;
+
+        // collapes form?
+    },
+    
+    onReset: function(evt) {
+        evt.preventDefault()
+        // Reset our form values
+        this.form.title = ''
+        this.form.description = ''
+        this.form.category = null
+        this.form.checked = []
+        // Trick to reset/clear native browser form validation state
+        this.show = false
+        this.$nextTick(() => {
+          this.show = true
+        })
+
     }
 
   },
   computed: {
+  },
+
+  created: function() {
+    var that = this;
+
+    // initialise
+
+    if (window.localStorage.getItem('items')) {
+
+      that.items = JSON.parse(window.localStorage.getItem('items'));
+      console.log("items: ", that.items);
+
+    } else {
+
+      var items = [
+          { category: "a", title: 'Add Item to ToDo List', description: 'Button and / or form for adding new items' },
+          { category: "b", title: 'Remove Item to ToDo List', description: 'Button and / or form for deleting items' },
+          { category: "c", title: 'Edit Item to ToDo List', description: 'Button and / or form for editing items' },
+          { category: "c", title: 'Order items', description: 'Order by priority / category' }
+        ];
+
+      window.localStorage.setItem('items', JSON.stringify(items));
+      that.items = JSON.parse(window.localStorage.getItem('items'));
+      console.log("initialised: ", that.items);
+
+    }
   }
 }
 </script>
